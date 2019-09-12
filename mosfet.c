@@ -43,12 +43,14 @@ void MosfetDetect(void)
                 }
                 else
                 {
-                    TOFF_DHG_MOS_Count=0;
+//                	_nop();
+                    TOFF_DHG_MOS_Count=0;//FENGLONG 20190805
                 }
             }
             else
             {
-                TOFF_DHG_MOS_Count=0;
+//            	_nop();
+                TOFF_DHG_MOS_Count=0;//FENGLONG 20190805
             }
         }
         else

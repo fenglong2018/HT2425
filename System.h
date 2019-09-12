@@ -76,6 +76,7 @@ typedef unsigned long             u32;
 #define Breathing_2     2
 #define Breathing_1     1
 
+#define ADC_TEMP                   (P1DIR &= ~BIT0)
 
 #define EN_UART_RX_P11             (P1DIR  |= BIT2);(P1SEL|=BIT1);(P1SEL2|=BIT1)
 #define EN_UART_TX_P12             (P1DIR  &=~BIT1);(P1SEL|=BIT2);(P1SEL2|=BIT2)
@@ -134,15 +135,15 @@ typedef unsigned long             u32;
 
 #define EN_PWM_LID_1_P21             (P2DIR|=BIT1);(P2SEL|=BIT1);(P2SEL2&=~BIT1)
 #define EN_PWM_LID_2_P22             (P2DIR|=BIT2);(P2SEL|=BIT2);(P2SEL2&=~BIT2)
-#define EN_PWM_LID_3_P32             (P3DIR|=BIT2);(P3SEL|=BIT2);(P3SEL2&=~BIT2)
-#define EN_PWM_LID_4_P33             (P3DIR|=BIT3);(P3SEL|=BIT3);(P3SEL2&=~BIT3)
+#define EN_PWM_LID_3_P33             (P3DIR|=BIT3);(P3SEL|=BIT3);(P3SEL2&=~BIT3)    //20190717 AID
+#define EN_PWM_LID_4_P32             (P3DIR|=BIT2);(P3SEL|=BIT2);(P3SEL2&=~BIT2)    //20190717 AID
 #define EN_PWM_LID_5_P24             (P2DIR|=BIT4);(P2SEL|=BIT4);(P2SEL2&=~BIT4)
 #define EN_PWM_LID_6_P25             (P2DIR|=BIT5);(P2SEL|=BIT5);(P2SEL2&=~BIT5)
 
 #define EN_LED_1_P21            (P2DIR|=BIT1);(P2SEL&=~BIT1);(P2SEL2&=~BIT1)
 #define EN_LED_2_P22            (P2DIR|=BIT2);(P2SEL&=~BIT2);(P2SEL2&=~BIT2)
-#define EN_LED_3_P32            (P3DIR|=BIT2);(P3SEL&=~BIT2);(P3SEL2&=~BIT2)
-#define EN_LED_4_P33            (P3DIR|=BIT3);(P3SEL&=~BIT3);(P3SEL2&=~BIT3)
+#define EN_LED_3_P33            (P3DIR|=BIT3);(P3SEL&=~BIT3);(P3SEL2&=~BIT3)    //20190717 AID
+#define EN_LED_4_P32            (P3DIR|=BIT2);(P3SEL&=~BIT2);(P3SEL2&=~BIT2)    //20190717 AID
 #define EN_LED_5_P24            (P2DIR|=BIT4);(P2SEL&=~BIT4);(P2SEL2&=~BIT4)
 #define EN_LED_6_P25            (P2DIR|=BIT5);(P2SEL&=~BIT5);(P2SEL2&=~BIT5)
 
@@ -151,10 +152,12 @@ typedef unsigned long             u32;
 #define LED_1_High               (P2OUT&=~BIT1)
 #define LED_2_Low              (P2OUT|=BIT2)
 #define LED_2_High               (P2OUT&=~BIT2)
-#define LED_3_Low              (P3OUT|=BIT2)
-#define LED_3_High               (P3OUT&=~BIT2)
-#define LED_4_Low              (P3OUT|=BIT3)
-#define LED_4_High               (P3OUT&=~BIT3)
+//20190717 AID
+#define LED_3_Low              (P3OUT|=BIT3)
+#define LED_3_High               (P3OUT&=~BIT3)
+#define LED_4_Low              (P3OUT|=BIT2)
+#define LED_4_High               (P3OUT&=~BIT2)
+
 #define LED_5_Low              (P2OUT|=BIT4)
 #define LED_5_High               (P2OUT&=~BIT4)
 #define LED_6_Low              (P2OUT|=BIT5)
@@ -267,6 +270,7 @@ typedef unsigned long             u32;
 
 #define PF_OTC_Default          880         //95 Deg      //fenglong 20190607      //permanent fail safety over temperature cell
 #define PF_OTM_Default          610         //111 Deg //120 Deg     //fenglong 20190607      //permanent fail safety over temperature MOSFET
+//#define PF_OTC_Def_RT3          922         //95度——AD值
 
 #define PT_OV_Default           4170        //mV    (BQ76930 Data)
 #define PT_OV_Release           4060        //mV        //
@@ -275,7 +279,7 @@ typedef unsigned long             u32;
 #define PT_UV_Release           3400       //3100        //3.1V
 
 #define PT_OCP_Default          2600     //1260        //12.60 A           //over charge current protection
-#define PT_ODP_Default          25000    //3300        //-33.00 A          //over discharge current protection  20190522 設置22安，實際19.6安，
+#define PT_ODP_Default          25000	//fenglong 20190801 应客户要求修改  23000    //3300        //-33.00 A          //over discharge current protection  20190522 設置22安，實際19.6安，
 
 //V = NTC10K+10K  3.3V   AD = (RT/RT+10000)*3300*4096/3300
 //VTSX = AD*382 μV
@@ -284,16 +288,25 @@ typedef unsigned long             u32;
 //AD = 3.3RTS/(10000+RTS)/382
 #define PT_OTCP_Default         2484  //50 Deg  fenglong 20190606          //over temperature charge protection
 #define PT_OTCP_Release         3110  //40 Deg  fenglong 20190606
+#define PT_OTCP_Def_RT3         723  //50度AD值
+#define PT_OTCP_Rel_RT3         647  //40度AD值
 
 #define ALARM_OTDA_Default      1760    //65 Deg
 #define PT_OTDP_Default         1393    //75 Deg    fenglong 20190606        //over temperature discharge protection
 #define PT_OTDP_Release         2222    //55 Deg    fenglong 20190606
+#define PT_OTDP_Def_RT3         859    //75度AD值
+#define PT_OTDP_Rel_RT3         757    //55度AD值
 
 #define ALARM_UTDA_Default      7123
 #define PT_UTCP_Default         6377  //0 Deg             //under temperature charge protection
 #define PT_UTCP_Release         5775  //7 Deg
+#define PT_UTCP_Def_RT3         275  //0度AD值
+#define PT_UTCP_Rel_RT3         338  //7度AD值
+
 #define PT_UTDP_Default         7516  //-18 Deg           //under temperature discharge protection
 #define PT_UTDP_Release         7068  //-10 Deg
+#define PT_UTDP_Def_RT3         143  //-18度AD值
+#define PT_UTDP_Rel_RT3         195  //-10度AD值
 
 #define ALARM_OTMA_Default      1182    //82 Deg
 

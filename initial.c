@@ -17,6 +17,8 @@
 extern union FW_PT FW_PT_Status;
 extern union SW_ALARM ALARM_PT_Status;        //警告值状态
 extern _BatteryData BatteryData;
+extern RegisterGroup   BQ76930Data;
+UINT16 his_data[FLASH_DATA_NUM];
 //extern _FlashData BQ76930ProtectData;
 
 void    Calibration (void)
@@ -49,10 +51,12 @@ void    GPIOInitial (void)
 
     EN_LED_1_P21;
     EN_LED_2_P22;
-    EN_LED_3_P32;
-    EN_LED_4_P33;
+    EN_LED_3_P33;
+    EN_LED_4_P32;
     EN_LED_5_P24;
     EN_LED_6_P25;
+
+    ADC_TEMP;
 
     EN_SW_pin;
     EN_DC_IN_pin;
@@ -68,7 +72,8 @@ void    GPIOInitial (void)
 
     CP_High;
     EN_RT_ON_Pin;
-    RT_ON_HIGH;
+    RT_ON_LOW;     //wk    190830
+    //RT_ON_HIGH;
 
 }
 
@@ -122,6 +127,39 @@ void I2C_Initial (void)
   * */
 
 }
+
+
+void his_data_init(void)//清理PF时清掉所有历史记录，方便之后故障原因排查
+{
+ his_data[HIS_Cell1MiniVoltage]=4200;                                        //fenglong 20190617
+ his_data[HIS_Cell2MiniVoltage]=4200;                                        //fenglong 20190617
+ his_data[HIS_Cell3MiniVoltage]=4200;                                        //fenglong 20190617
+ his_data[HIS_Cell4MiniVoltage]=4200;                                        //fenglong 20190617
+ his_data[HIS_Cell5MiniVoltage]=4200;                                        //fenglong 20190617
+ his_data[HIS_Cell6MiniVoltage]=4200;                                        //fenglong 20190617
+ his_data[HIS_Cell7MiniVoltage]=4200;                                        //fenglong 20190617
+
+ his_data[HIS_Cell1MAXiVoltage]=0;                                        //fenglong 20190730
+ his_data[HIS_Cell2MAXiVoltage]=0;                                        //fenglong 20190730
+ his_data[HIS_Cell3MAXiVoltage]=0;                                        //fenglong 20190730
+ his_data[HIS_Cell4MAXiVoltage]=0;                                        //fenglong 20190730
+ his_data[HIS_Cell5MAXiVoltage]=0;                                        //fenglong 20190730
+ his_data[HIS_Cell6MAXiVoltage]=0;                                        //fenglong 20190730
+ his_data[HIS_Cell7MAXiVoltage]=0;                                        //fenglong 20190730
+
+ his_data[HIS_MINVOLT] = 0xffff;
+ his_data[HIS_MAXVOLT] = 0;
+
+ his_data[HIS_MOSFET_MAXTEMP]=4000;           //wk 190905
+
+ his_data[HIS_CHG_MAXCURRENT] = 0;            //wk 190905
+ his_data[HIS_DSG_MAXCURRENT] = 0;            //wk 190905
+
+ his_data[HIS_CHG_MAXTEMP] = 0;               //wk 190905
+ his_data[HIS_DSG_MAXTEMP] = 0;               //wk 190905
+}
+
+
 void Timer_A_initial (void)
 {
     TA0CTL = TASSEL_2 + ID_3 + MC_1 + TACLR + TAIE;     //Timer 0 , SMCLK / 8 , TA0CCTL0 , INT
@@ -175,10 +213,6 @@ void RAM_Init(void)
     BatteryData.VCell7.VCell7Word =3600;
 
     FW_PT_Status.Word=0;        //fenglong 20190602
-
-
-//    BQ76930ProtectData.CellBal1.CellBal1Byte=0;     //fenglong 20190620
-//    BQ76930ProtectData.CellBal2.CellBal2Byte=0;     //fenglong 20190620
 
 }
 

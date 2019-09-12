@@ -1,7 +1,7 @@
-๏ปฟ/*
+/*
  * balance.c
  *
- *  Created on: 2019ๅนด6ๆ14ๆ—ฅ
+ *  Created on: 2019ฤ๊6ิย14ศี
  *      Author: fenglong
  */
 
@@ -152,7 +152,7 @@ void balance(void)
         BQ76930Data.CellBal1.CellBal1Byte=0x00;
         BQ76930Data.CellBal2.CellBal2Byte=0x00;
 		balance_check();
-		//ยฒรฉร‘ยฏรรจร’ยชยพรนยบรขยตรยดยฎยบร…ยบรณยฟยชรรดยพรนยบรข
+		//ฒ้ัฏะ่าชพ๙บโตฤดฎบลบ๓ฟชฦ๔พ๙บโ
 		TEST_1=I2C_Master_TransmitByte(CELLBAL1,BQ76930Data.CellBal1.CellBal1Byte);
 		TEST_1=I2C_Master_TransmitByte(CELLBAL2,BQ76930Data.CellBal2.CellBal2Byte);
     }

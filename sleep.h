@@ -11,7 +11,7 @@
 #include "system.h"
 
 
-#define SleepCurrent    1000//0xFFFF-1000//0x8020
+#define SleepCurrent    1000//0xFFFF-1000//0x8020 //ÁÙÊ±ĞŞ¸ÄÎª400
 
 
 

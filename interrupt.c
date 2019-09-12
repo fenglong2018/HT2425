@@ -24,18 +24,18 @@ volatile UINT8 soc_500ms_count =0;
 extern  uchar Alert_count;
 extern  UINT16 Sleep_delay;
 extern uchar Alert_count;
-#pragma vector=TIMER0_A0_VECTOR
-__interrupt void TR0A0_ISR(void)
-{
-    _nop ();
-    _nop ();
-}
+//#pragma vector=TIMER0_A0_VECTOR
+//__interrupt void TR0A0_ISR(void)
+//{
+//    _nop ();
+//    _nop ();
+//}
 #pragma vector=TIMER0_A1_VECTOR
 __interrupt void TR0A1_ISR(void)
 {
-    T0_INT_count++;
+	WDTCTL = WDT_ARST_1000;
 
-    WDTCTL = WDT_ARST_1000;
+    T0_INT_count++;
 
     Clear_TA0CCTL0_CCIFG;
     Clear_TA0CCTL1_CCIFG;

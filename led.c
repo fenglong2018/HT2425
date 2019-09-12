@@ -168,8 +168,8 @@ void LED_OFF(void)
     LED_6_Low;
     EN_LED_1_P21;
     EN_LED_2_P22;
-    EN_LED_3_P32;
-    EN_LED_4_P33;
+    EN_LED_3_P33;
+    EN_LED_4_P32;
     EN_LED_5_P24;
     EN_LED_6_P25;
 }

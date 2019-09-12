@@ -24,7 +24,7 @@ extern UINT16 PT_UV_Count;
 extern UINT16 Cell_PF_UV_Count;
 extern UINT16 PF_OCC_Count;
 extern UINT16 Cell_PF_OV_Count;
-
+extern UINT16 RT3_AD;
 
 extern UINT8 BatteryCapacity;
 extern UINT16 CellMiniVoltage;
@@ -110,8 +110,8 @@ void ProtectDetect(void)
     }
     else                                //DC pull out
     {
-//        FW_PT_Status.Bits.PT_UTSCP=0;
-//        FW_PT_Status.Bits.PT_OTSCP=0;
+        FW_PT_Status.Bits.PT_UTSCP=0;
+        FW_PT_Status.Bits.PT_OTSCP=0;
         DC_IN_Count = 0;
         if (DC_IN_Release_Count <= TA0_5s)
         {
@@ -170,7 +170,7 @@ void ProtectDetect(void)
 
     if (PF_OTC_Count <= TA0_4s)
     {
-        if (BatteryData.TS1.TS1Word < PF_OTC_Default)
+        if (BatteryData.TS1.TS1Word < PF_OTC_Default)// || RT3_AD > PF_OTC_Def_RT3)   //190902 wk(增加RT3)
             PF_OTC_Count = PF_OTC_Count + 1;
         else
             PF_OTC_Count = 0;
@@ -199,7 +199,7 @@ void ProtectDetect(void)
         if (PT_ODP_Count <= TA0_8s)             //over discharge current protection
         {
 
-            if ((cur_tmp) > PT_ODP_Default) //放电 30A
+            if ((cur_tmp) > PT_ODP_Default) //放电 25A
                 PT_ODP_Count = PT_ODP_Count + 1;
             else
                 PT_ODP_Count = 0;
@@ -212,7 +212,7 @@ void ProtectDetect(void)
         //充电 过流
         if (PF_OCC_Count <= TA0_8s)
         {
-            if ((BatteryData.CC.CCWord > PF_OCC_Default))   //16A       //permanent fail  over current in charge
+            if ((BatteryData.CC.CCWord > PF_OCC_Default))   //6A       //permanent fail  over current in charge
                 PF_OCC_Count = PF_OCC_Count + 1;
             else
                 PF_OCC_Count = 0;
@@ -235,7 +235,7 @@ void ProtectDetect(void)
 //    {
     if (PT_OTCP_Count <= TA0_8s)                //over temperature charge protection
     {
-        if (BatteryData.TS1.TS1Word <= PT_OTCP_Default)     //fenglong 20190607
+        if (BatteryData.TS1.TS1Word <= PT_OTCP_Default || RT3_AD >= PT_OTCP_Def_RT3)     //190902 wk(增加RT3)//fenglong 20190607
             PT_OTCP_Count = PT_OTCP_Count + 1;
         else
             PT_OTCP_Count = 0;
@@ -243,7 +243,7 @@ void ProtectDetect(void)
 
     if (PT_UTCP_Count <= TA0_8s)
     {
-        if (BatteryData.TS1.TS1Word >= PT_UTCP_Default)
+        if (BatteryData.TS1.TS1Word >= PT_UTCP_Default || RT3_AD <= PT_UTCP_Def_RT3)    //190902 wk(增加RT3)
             PT_UTCP_Count = PT_UTCP_Count + 1;
         else
             PT_UTCP_Count = 0;                              //under temperature charge protection
@@ -273,7 +273,7 @@ void ProtectDetect(void)
 
     if (PT_OTDP_Count <= TA0_8s)                            //over temperature discharge protection
     {
-        if (BatteryData.TS1.TS1Word <= PT_OTDP_Default)
+        if (BatteryData.TS1.TS1Word <= PT_OTDP_Default || RT3_AD >= PT_OTDP_Def_RT3)    //190902 wk(增加RT3)
             PT_OTDP_Count = PT_OTDP_Count + 1;
         else
             PT_OTDP_Count = 0;
@@ -281,7 +281,7 @@ void ProtectDetect(void)
 
     if (PT_UTDP_Count <= TA0_8s)                        //under temperature discharge protection
     {
-        if (BatteryData.TS1.TS1Word >= PT_UTDP_Default)
+        if (BatteryData.TS1.TS1Word >= PT_UTDP_Default || RT3_AD <= PT_UTDP_Def_RT3)    //190902 wk(增加RT3)
             PT_UTDP_Count = PT_UTDP_Count + 1;
         else
             PT_UTDP_Count = 0;
@@ -292,6 +292,7 @@ void ProtectDetect(void)
     {
         FW_PT_Status.Bits.PT_UV = 0;
         PT_UV_Count = 0;
+
     }
     //20190704
 //    if (FW_PT_Status.Bits.PT_ODP == 1)          //over discharge current protection

@@ -97,6 +97,20 @@ typedef struct _Register_Group
 		unsigned char CellBal2Byte;
 	}CellBal2;
 
+//	union
+//	{
+//		struct
+//		{
+//		    unsigned char CB11          :1;
+//		    unsigned char CB12          :1;
+//		    unsigned char CB13          :1;
+//		    unsigned char CB14          :1;
+//		    unsigned char CB15          :1;
+//			unsigned char RSVD			:3;
+//		}CellBal3Bit;
+//		unsigned char CellBal3Byte;
+//	}CellBal3;
+
 	union
 	{
 		struct

@@ -1,7 +1,7 @@
 /*
  * TempCK.c
  *
- *  Created on: 2019√Ñ√™5√î√Ç31√à√ï
+ *  Created on: 2019ƒÍ5‘¬31»’
  *      Author: fenglong
  */
 
@@ -11,7 +11,7 @@
 
 extern _BatteryData BatteryData;
 extern union FW_PT FW_PT_Status;
-extern union SW_ALARM ALARM_PT_Status;        //¬æ¬Ø¬∏√¶√ñ¬µ√ó¬¥√å¬¨
+extern union SW_ALARM ALARM_PT_Status;        //æØ∏Ê÷µ◊¥Ã¨
 
 void Temp_CHG_Start_Check(void)                     // started charging temperature protection
 {
@@ -19,8 +19,8 @@ void Temp_CHG_Start_Check(void)                     // started charging temperat
     if (BatteryData.TS1.TS1Word >= PT_UTSCP_Default)     //greater than 3 degrees      fenglong 20190607
     {
         FW_PT_Status.Bits.PT_UTSCP=1;
-//        FW_PT_Status.Bits.PT_UTCP = 1;                    //fenglong 20190805
-//        ALARM_PT_Status.Bits.AL_GLINT=1;                    //fenglong 20190702 Êä•Ë≠¶Èó™ÁÉÅ
+        FW_PT_Status.Bits.PT_UTCP = 1;
+//        ALARM_PT_Status.Bits.AL_GLINT=1;                    //fenglong 20190702 ±®æØ…¡À∏
     }
     else if(BatteryData.TS1.TS1Word < PT_UTSCP_Release)     //less than 2 degrees
     {
@@ -30,7 +30,8 @@ void Temp_CHG_Start_Check(void)                     // started charging temperat
     if (BatteryData.TS1.TS1Word <= PT_OTSCP_Default)     //greater than 46 degrees
     {
         FW_PT_Status.Bits.PT_OTSCP=1;
-//        ALARM_PT_Status.Bits.AL_GLINT=1;                    //fenglong 20190702 ¬±¬®¬æ¬Ø√â√Å√ã¬∏
+//        FW_PT_Status.Bits.PT_OTCP = 1;
+//        ALARM_PT_Status.Bits.AL_GLINT=1;                    //fenglong 20190702 ±®æØ…¡À∏
     }
     else if(BatteryData.TS1.TS1Word > PT_OTSCP_Release)     //less than 45 degrees        fenglong 20190607
     {
@@ -47,7 +48,7 @@ UINT8 Temp_DSG_Start_Check(void)                         // started discharging 
     if (BatteryData.TS1.TS1Word < PT_OTSDP_Default)     //greater than 61 degrees
     {
         FW_PT_Status.Bits.PT_OTSDP=1;
-//        ALARM_PT_Status.Bits.AL_GLINT=1;                    //fenglong 20190702 ¬±¬®¬æ¬Ø√â√Å√ã¬∏
+//        ALARM_PT_Status.Bits.AL_GLINT=1;                    //fenglong 20190702 ±®æØ…¡À∏
 
     }
     else if(BatteryData.TS1.TS1Word > PT_OTSDP_Release)     //less than 60 degrees

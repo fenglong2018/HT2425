@@ -11,7 +11,7 @@
 _BatteryRealData    BatteryRealData;
 uchar SFET;
 uchar CRC_DATA=0;
-
+extern UINT16 RT3_AD;
 uchar RS485_MODE=0;
 extern RegisterGroup   BQ76930Data;
 extern _BatteryData    BatteryData;
@@ -164,14 +164,14 @@ void RS485_REC_Task(void)
 
                      RS485_Char_TX(':');
 
-                     UART_Transmit(BATTRYPRODATA1,sizeof(BATTRYPRODATA1));
+                     UART_Transmit((uchar *)BATTRYPRODATA1,sizeof(BATTRYPRODATA1));
 
 //                     temp=crc8_cal(BATTRYPRODATA1,sizeof(BATTRYPRODATA1));
 //
 //                     UART_Transmit((uint)&temp,1);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -198,40 +198,40 @@ void RS485_REC_Task(void)
 
                      RS485_Char_TX(':');
 
-                     UART_Transmit(BATTARYREALDATA1,sizeof(BATTARYREALDATA1));      //fenglong 20190617
+                     UART_Transmit((uchar *)BATTARYREALDATA1,sizeof(BATTARYREALDATA1));      //fenglong 20190617
 
 //                     UART_Transmit((uint)&BatteryRealData,5);                     //fenglong 20190617
 //
 //                     UART_Transmit((uint)&BatteryRealData+6,7);                   //fenglong 20190617
 
 //                     UART_Transmit((uint)&BatteryRealData+14,3);Vcell_num         //fenglong 20190617
-                     UART_Transmit((uint)&BatteryRealData.BMS_Vbat,2);              //fenglong 20190617
-                     UART_Transmit(BATTARYREALDATA_CELL_NUM,1);
-                     UART_Transmit((uint)&BatteryRealData.Vcell,14);
-                     UART_Transmit((uint)&BatteryRealData.Curr,4);
-                     UART_Transmit(BATTARYREALDATA_TEMPNUM,1);
-                     UART_Transmit((uint)&BatteryRealData.Temp,2);
-                     UART_Transmit((uint)&BatteryRealData._VSTATE,8);
-                     UART_Transmit((uint)&BatteryRealData._FETSTATE,1);
+                     UART_Transmit((uchar *)&BatteryRealData.BMS_Vbat,2);              //fenglong 20190617
+                     UART_Transmit((uchar *)BATTARYREALDATA_CELL_NUM,1);
+                     UART_Transmit((uchar *)&BatteryRealData.Vcell,14);
+                     UART_Transmit((uchar *)&BatteryRealData.Curr,4);
+                     UART_Transmit((uchar *)BATTARYREALDATA_TEMPNUM,1);
+                     UART_Transmit((uchar *)&BatteryRealData.Temp,2);
+                     UART_Transmit((uchar *)&BatteryRealData._VSTATE,8);
+                     UART_Transmit((uchar *)&BatteryRealData._FETSTATE,1);
 
-                     UART_Transmit(BATTARYREALDATA_BLANK,1);
-                     UART_Transmit((uint)&BatteryRealData.NUM_VOV,1);
-                     UART_Transmit(BATTARYREALDATA_BLANK,1);
-                     UART_Transmit((uint)&BatteryRealData.NUM_VUV,1);
-                     UART_Transmit(BATTARYREALDATA_BLANK,1);
-                     UART_Transmit((uint)&BatteryRealData.NUM_WARN_VHIGH,1);
-                     UART_Transmit(BATTARYREALDATA_BLANK,1);
-                     UART_Transmit((uint)&BatteryRealData.NUM_WARN_VLOW,1);
+                     UART_Transmit((uchar *)BATTARYREALDATA_BLANK,1);
+                     UART_Transmit((uchar *)&BatteryRealData.NUM_VOV,1);
+                     UART_Transmit((uchar *)BATTARYREALDATA_BLANK,1);
+                     UART_Transmit((uchar *)&BatteryRealData.NUM_VUV,1);
+                     UART_Transmit((uchar *)BATTARYREALDATA_BLANK,1);
+                     UART_Transmit((uchar *)&BatteryRealData.NUM_WARN_VHIGH,1);
+                     UART_Transmit((uchar *)BATTARYREALDATA_BLANK,1);
+                     UART_Transmit((uchar *)&BatteryRealData.NUM_WARN_VLOW,1);
 
-                     UART_Transmit(BATTARYREALDATA_BLANK,1);
-                     UART_Transmit((uint)&BatteryRealData.BlanceState,1);               //fenglong 20190620
+                     UART_Transmit((uchar *)BATTARYREALDATA_BLANK,1);
+                     UART_Transmit((uchar *)&BatteryRealData.BlanceState,1);               //fenglong 20190620
 
-                     UART_Transmit((uint)&BatteryRealData.DchgNum,4);
-                     UART_Transmit((uint)&BatteryRealData.SOC,1);
-                     UART_Transmit((uint)&BatteryRealData.CapNow,4);
+                     UART_Transmit((uchar *)&BatteryRealData.DchgNum,4);
+                     UART_Transmit((uchar *)&BatteryRealData.SOC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CapNow,4);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -311,10 +311,10 @@ void RS485_REC_Task(void)
 
                      RS485_Char_TX(':');
 
-                     UART_Transmit(&usartRxbuffer,6);
+                     UART_Transmit((uchar *)&usartRxbuffer,6);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -360,10 +360,10 @@ void RS485_REC_Task(void)
 //                     usartRxbuffer[13] =CRC_DATA;
 
                      RS485_Char_TX(':');
-                     UART_Transmit(&usartRxbuffer,13);
+                     UART_Transmit((uchar *)&usartRxbuffer,13);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -402,10 +402,10 @@ void RS485_REC_Task(void)
 //                     usartRxbuffer[9] = crc8_cal(&usartRxbuffer, 9);
 
                      RS485_Char_TX(':');
-                     UART_Transmit(&usartRxbuffer,9);
+                     UART_Transmit((uchar *)&usartRxbuffer,9);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -444,10 +444,10 @@ void RS485_REC_Task(void)
 
 
                      RS485_Char_TX(':');
-                     UART_Transmit(&usartRxbuffer,6);
+                     UART_Transmit((uchar *)&usartRxbuffer,6);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -485,10 +485,10 @@ void RS485_REC_Task(void)
 
 
                      RS485_Char_TX(':');
-                     UART_Transmit(&usartRxbuffer,5);
+                     UART_Transmit((uchar *)&usartRxbuffer,5);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -507,6 +507,11 @@ void RS485_REC_Task(void)
                      RS_485.RxCount=0;
                      RS_485.RxStatus = USART_RX_IDLE;
                      RS485_RE;
+
+
+                     //20190912 fenglong 为追查无故进SHIPPING增加的代码
+                     his_data[HIS_DSG_UVP_ADD] |= 0x02;
+
 
                      SystemMode = SystemShipMode;
 
@@ -537,10 +542,10 @@ void RS485_REC_Task(void)
 
                      RS485_Char_TX(':');
 
-                     UART_Transmit(&usartRxbuffer,8);
+                     UART_Transmit((uchar *)&usartRxbuffer,8);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -582,10 +587,10 @@ void RS485_REC_Task(void)
                      usartRxbuffer[8] = 0x44;
 
                      RS485_Char_TX(':');
-                     UART_Transmit(&usartRxbuffer,9);
+                     UART_Transmit((uchar *)&usartRxbuffer,9);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -627,10 +632,10 @@ void RS485_REC_Task(void)
                      usartRxbuffer[7] = (his_data[PRODUCTION_YY] & 0xFF00)>>8;
 
                      RS485_Char_TX(':');
-                     UART_Transmit(&usartRxbuffer,8);
+                     UART_Transmit((uchar *)&usartRxbuffer,8);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -658,9 +663,6 @@ void RS485_REC_Task(void)
                      }
 
                      RS485_DE;
-
-                     CLR_PF();
-
                      usartRxbuffer[0] = 0x01;
                      usartRxbuffer[1] = 0x28;
                      usartRxbuffer[2] = 0x8A;
@@ -669,10 +671,10 @@ void RS485_REC_Task(void)
                      usartRxbuffer[5] = 0x10;
 
                      RS485_Char_TX(':');
-                     UART_Transmit(&usartRxbuffer,6);
+                     UART_Transmit((uchar *)&usartRxbuffer,6);
 
                      BatteryRealData.CRC = CRC_DATA^0xFF;
-                     UART_Transmit((uint)&BatteryRealData.CRC,1);
+                     UART_Transmit((uchar *)&BatteryRealData.CRC,1);
 
                      RS485_Char_TX('~');
                      CRC_DATA = 0 ;
@@ -685,9 +687,11 @@ void RS485_REC_Task(void)
                          }
                      }
 
+                     CLR_PF();
                      RS_485.RxCount=0;
                      RS_485.RxStatus = USART_RX_IDLE;
                      RS485_RE;
+                     //while(1);
                      break;
 
                  default:
@@ -1071,8 +1075,8 @@ void BatteryRealData_Refresh(void)
 //    BatteryRealData.DchgNum.val=U16_SWAP(his_data[CHG_CAP_CNT]);
 //
 //    BatteryRealData.DchgNum.val=U16_SWAP(his_data[FLASH_CYCLES_ADDR]);
-//    BatteryRealData.DchgNum.val=U16_SWAP(TOFF_DHG_MOS_Count);		//FENGLONG 20190805
-
+    BatteryRealData.DchgNum.val=U16_SWAP(RT3_AD);		//FENGLONG 20190805
+    //BatteryRealData.DchgNum.val=U16_SWAP(0);
     BatteryRealData.ChgNum.val=U16_SWAP(his_data[FLASH_CYCLES_ADDR]);
 
 //    BatteryRealData.SOC=BatteryCapacity;      //20190528 fenglong

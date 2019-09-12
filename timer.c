@@ -26,7 +26,7 @@ void __attribute__ ((interrupt(TIMER1_A0_VECTOR))) Timer_A (void)
 //----------------------------------//
     LED1_PWM(BIT1);
     LED2_PWM(BIT2);
-    LED3_PWM(BIT2);
+    LED3_PWM(BIT3);
 //----------------------------------//
 //    LED_4_High;
 }

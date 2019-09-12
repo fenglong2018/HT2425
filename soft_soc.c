@@ -210,7 +210,8 @@ void NormalCapacityProc(void)
 {
 
 	    u32 capacity_volt;
-	
+	    
+
         if( power_first_flag==0 )
         {
         	if( BatteryCapacityRefreshCount> TA0_10s )

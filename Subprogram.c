@@ -12,6 +12,7 @@
 
 #include "system.h"
 #include "Subprogram.h"
+#include "initial.h"
 /*
  const UINT16  Breathing[]={0xF50A, 0xEC13, 0xE01F, 0xD12E, 0xBF40,
  0xAA55, 0x926D, 0x7788, 0x59A6, 0x38C7,
@@ -34,13 +35,13 @@ const UINT16 BreathingTable_1200[] = { 575, 855, 1275, 1835, 2535, 3375, 4355,
                                        8135, 6735, 5475, 4355, 3375, 2535, 1835,
                                        1275, 855, 575, 435 };// 可以优化
 
-const UINT16 BreathingTable_800[] = {  575, 855,1275, 1835,
-                                       5475, 8135, 9675,
-                                       15135, 17235, 19475, 25000,27035, 39075,
-                                       49575, 53355, 57275, 61335, 65535,65535, 65535,61335,
-                                       57275, 53355, 49575, 45935, 42435, 39075,27035,25000,
-                                       19475, 17235, 15135, 9675,
-                                       8135, 5475,  1835,1275, 855, 575,455};// 可以优化
+const UINT16 BreathingTable_800[] = {  575, 855, 1275, 1835, 5475, 8135,
+                                       9675, 15135, 17235, 19475, 25000, 27035,
+                                       39075, 49575, 53355, 57275, 61335, 65535,
+                                       65535, 65535, 61335, 57275, 53355, 49575,
+                                       45935, 42435, 39075, 27035, 25000, 19475,
+                                       17235, 15135, 9675, 8135, 5475, 1835,
+                                       1275, 855, 575, 455};// 可以优化
 
 
 
@@ -88,6 +89,7 @@ RegisterGroup BQ76930Data;
 _BatteryData BatteryData;
 //_FlashData BQ76930ProtectData;
 
+extern UINT16 RT3_AD;
 extern unsigned char deta_cap_cnt;
 extern uchar RS485_MODE;
 extern union _LED_CTRL LED_CTRL;
@@ -163,22 +165,22 @@ extern UINT16 his_data[FLASH_DATA_NUM];
 
 void Falsh_Write_Arr(unsigned int *Addr,unsigned int nValue[],unsigned char n)//向指定地址连续写一个数组,n代表字节数,不能超过32
 {
-	unsigned char i;
+    unsigned char i;
     FCTL1 = FWKEY+ERASE;
     FCTL3 = FWKEY;
     *Addr=0;                             //随便写入一个值进行清除，段A的操作比较特别，一般不对段A进行操作,因为段A中包含一些校验数据
 
-	FCTL1 = FWKEY+WRT;                            // 允许写
+    FCTL1 = FWKEY+WRT;                            // 允许写
     FCTL3 = FWKEY;                                // 解锁
     while((FCTL3&BUSY) == BUSY);                  //检测Flash是否在操作，连续写入时最好检测
 
     if(n>32)
     {
-    	return;
+        return;
     }
     for( i=0;i<n;i++)
     {
-    	*Addr++ = nValue[i];
+        *Addr++ = nValue[i];
     }
     FCTL1 = FWKEY;                                //清除WRT，不能写
     FCTL3 = FWKEY+LOCK;                           // 锁定
@@ -186,8 +188,8 @@ void Falsh_Write_Arr(unsigned int *Addr,unsigned int nValue[],unsigned char n)//
 }
 unsigned int Flash_Read_int(unsigned int *start_addr,uint8_t index)   //read one word
 {
-	unsigned int *flash_ptr = ((unsigned int *) start_addr) + index;
-	return *flash_ptr;
+    unsigned int *flash_ptr = ((unsigned int *) start_addr) + index;
+    return *flash_ptr;
 }
 
 #endif
@@ -364,7 +366,7 @@ void SystemPF_Detect(void)
     if (Cell_PF_OV_Count >= TA0_8s)
         FW_PF_Status.Bits.PF_OV = 1;            //4.23mV    -   8s      //permanent fail safety over voltage
 
-    if (PF_OCC_Count >= TA0_3s)     //20190805 应客户要求，由2S改3S fenglong
+    if (PF_OCC_Count >= TA0_2s)
         FW_PF_Status.Bits.PF_OCC = 1;           //permanent fail  over current in charge
 
     if (PF_OCD_Count >= TA0_4s)                 //permanent fail  over current in discharge
@@ -451,7 +453,7 @@ void SystemPF_Detect(void)
 
     if (PT_ODP_Count >= TA0_6s)
         FW_PT_Status.Bits.PT_ODP = 1;       //over discharge current protection
-	//20190704
+    //20190704
 //    if ((FW_PT_Status.Bits.PT_ODP == 1) && (PT_ODP_AutoReleaseCount >= TA0_10s))        //fenglong 20190607
 //    {
 //        FW_PT_Status.Bits.PT_ODP = 0;       //over discharge current protection
@@ -463,7 +465,7 @@ void SystemPF_Detect(void)
         FW_PT_Status.Bits.PT_OTCP = 1;                          //over temperature charge protection
 
     if ((FW_PT_Status.Bits.PT_OTCP == 1)                        //over temperature charge protection
-            && (BatteryData.TS1.TS1Word >= PT_OTCP_Release))
+            && (BatteryData.TS1.TS1Word >= PT_OTCP_Release) && (RT3_AD <= PT_OTCP_Rel_RT3))//190902 wk(增加RT3)
     {
         FW_PT_Status.Bits.PT_OTCP = 0;
         FW_PT_Status.Bits.PT_OTSCP=0;
@@ -521,7 +523,7 @@ void SystemPF_Detect(void)
 
 
     if ((FW_PT_Status.Bits.PT_UTCP == 1)
-            && (BatteryData.TS1.TS1Word <= PT_UTCP_Release))
+            && (BatteryData.TS1.TS1Word <= PT_UTCP_Release) && (RT3_AD >= PT_UTCP_Rel_RT3))//190902 wk(增加RT3)
     {
         FW_PT_Status.Bits.PT_UTCP = 0;                      //under temperature charge protection
         FW_PT_Status.Bits.PT_UTSCP=0;
@@ -532,7 +534,7 @@ void SystemPF_Detect(void)
         FW_PT_Status.Bits.PT_OTDP = 1;                      //over temperature discharge protection
 
     if ((FW_PT_Status.Bits.PT_OTDP == 1)                    //over temperature discharge protection
-            && (BatteryData.TS1.TS1Word >= PT_OTDP_Release))
+            && (BatteryData.TS1.TS1Word >= PT_OTDP_Release) && (RT3_AD <= PT_OTDP_Rel_RT3))//190902 wk(增加RT3)
     {
         FW_PT_Status.Bits.PT_OTDP = 0;                      //over temperature discharge protection
         PT_OTDP_Count = 0;
@@ -542,7 +544,7 @@ void SystemPF_Detect(void)
         FW_PT_Status.Bits.PT_UTDP = 1;          //under temperature discharge protection
 
     if ((FW_PT_Status.Bits.PT_UTDP == 1)
-            && (BatteryData.TS1.TS1Word <= PT_UTDP_Release))
+            && (BatteryData.TS1.TS1Word <= PT_UTDP_Release) && (RT3_AD >= PT_UTDP_Rel_RT3))//190902 wk(增加RT3)
     {
         FW_PT_Status.Bits.PT_UTDP = 0;          //under temperature discharge protection
         PT_UTDP_Count = 0;
@@ -554,7 +556,7 @@ void SystemPF_Detect(void)
 
     if (BQ76930Data.SysStatus.StatusBit.DEVICE_XREADY == 1)
     {
-//    	LED_1_High;
+//      LED_1_High;
         Buff_1 = BQ76930Data.SysStatus.StatusByte;
         BQ76930Data.SysStatus.StatusByte = 0x00;
         BQ76930Data.SysStatus.StatusBit.DEVICE_XREADY = 1;
@@ -628,30 +630,30 @@ void MosStatusDetect(void)
     UINT8 Buff_0,Buff_1;
     UINT8 SysCtrl2_Data;
 
-	SystemPF_Detect();
+    SystemPF_Detect();
 
-	HW_PT_Status.Byte = BQ76930Data.SysStatus.StatusByte;
-	Buff_1 = BQ76930Data.SysCtrl2.SysCtrl2Byte;             //MOS Status
-	SysCtrl2_Data = Buff_1 & 0xF0;
+    HW_PT_Status.Byte = BQ76930Data.SysStatus.StatusByte;
+    Buff_1 = BQ76930Data.SysCtrl2.SysCtrl2Byte;             //MOS Status
+    SysCtrl2_Data = Buff_1 & 0xF0;
 
-	if (FW_PF_Status.Word == 0)
-	{
-		if (SystemMode == SystemChargeMode)
-		{
-			if ((HW_PT_Status.Bits.HW_OV == 0)              //cell over voltage 单体过压
-					&& (FW_PT_Status.Bits.PT_OCP == 0)      //over charge current protection
-					&& (FW_PT_Status.Bits.PT_OTCP == 0)     //over temperature charge protection
-					&& (FW_PT_Status.Bits.PT_UTCP == 0)     //under temperature charge protection
-					&&(ALARM_PT_Status.Bits.HW_OTM == 0)
-					&& (FW_PT_Status.Bits.PT_OV == 0)               // fenglong 20190605
-					&& (FW_PT_Status.Bits.PT_OTSCP == 0)
-					&& (FW_PT_Status.Bits.PT_UTSCP == 0)
-					&& (HW_PT_Status.Bits.HW_OV == 0 )
-//					&& (ALARM_PT_Status.Bits.AL_OV == 0)        //fenglong 20190621
-					)
-			{
-				SysCtrl2_Data = SysCtrl2_Data + BQ76930_CHG_ON;
-			}
+    if (FW_PF_Status.Word == 0)
+    {
+        if (SystemMode == SystemChargeMode)
+        {
+            if ((HW_PT_Status.Bits.HW_OV == 0)              //cell over voltage 单体过压
+                    && (FW_PT_Status.Bits.PT_OCP == 0)      //over charge current protection
+                    && (FW_PT_Status.Bits.PT_OTCP == 0)     //over temperature charge protection
+                    && (FW_PT_Status.Bits.PT_UTCP == 0)     //under temperature charge protection
+                    &&(ALARM_PT_Status.Bits.HW_OTM == 0)
+                    && (FW_PT_Status.Bits.PT_OV == 0)               // fenglong 20190605
+                    && (FW_PT_Status.Bits.PT_OTSCP == 0)
+                    && (FW_PT_Status.Bits.PT_UTSCP == 0)
+                    && (HW_PT_Status.Bits.HW_OV == 0 )
+//                  && (ALARM_PT_Status.Bits.AL_OV == 0)        //fenglong 20190621
+                    )
+            {
+                SysCtrl2_Data = SysCtrl2_Data + BQ76930_CHG_ON;
+            }
             else
             {
                 _nop();
@@ -680,14 +682,14 @@ void MosStatusDetect(void)
         }
     }
 
-	if (Buff_1 != SysCtrl2_Data)
-	{
-	    Buff_0 = I2C_Master_TransmitByte(BQ76930_SYS_CTRL2_Addr, SysCtrl2_Data);
-		if (Buff_0 == 0)
+    if (Buff_1 != SysCtrl2_Data)
+    {
+        Buff_0 = I2C_Master_TransmitByte(BQ76930_SYS_CTRL2_Addr, SysCtrl2_Data);
+        if (Buff_0 == 0)
         {
-		    BQ76930Data.SysCtrl2.SysCtrl2Byte = SysCtrl2_Data;
+            BQ76930Data.SysCtrl2.SysCtrl2Byte = SysCtrl2_Data;
         }
-	}
+    }
 
 
 }
@@ -727,7 +729,7 @@ void Update_BQ_Data(void)
             his_data[HIS_Cell1MAXiVoltage]=BatteryData.VCell1.VCell1Word;
         }
 
-		iTemp = BQ76930Data.VCell2.VCell2Byte.VC2_HI;
+        iTemp = BQ76930Data.VCell2.VCell2Byte.VC2_HI;
         iTemp <<=8;
         iTemp += BQ76930Data.VCell2.VCell2Byte.VC2_LO;
         lTemp = ((unsigned long)iTemp * iGain)/1000;
@@ -753,7 +755,7 @@ void Update_BQ_Data(void)
             his_data[HIS_Cell2MAXiVoltage]=BatteryData.VCell2.VCell2Word;
         }
 
-		iTemp = BQ76930Data.VCell3.VCell3Byte.VC3_HI;
+        iTemp = BQ76930Data.VCell3.VCell3Byte.VC3_HI;
         iTemp <<=8;
         iTemp += BQ76930Data.VCell3.VCell3Byte.VC3_LO;
         lTemp = ((unsigned long)iTemp * iGain)/1000;
@@ -778,7 +780,7 @@ void Update_BQ_Data(void)
             his_data[HIS_Cell3MAXiVoltage]=BatteryData.VCell3.VCell3Word;
         }
 
-		iTemp = BQ76930Data.VCell5.VCell5Byte.VC5_HI;
+        iTemp = BQ76930Data.VCell5.VCell5Byte.VC5_HI;
         iTemp <<=8;
         iTemp += BQ76930Data.VCell5.VCell5Byte.VC5_LO;
         lTemp = ((unsigned long)iTemp * iGain)/1000;
@@ -803,10 +805,10 @@ void Update_BQ_Data(void)
             his_data[HIS_Cell4MAXiVoltage]=BatteryData.VCell4.VCell4Word;
         }
 
-		result = I2C_Load_BQ76930(&BQ76930Data.VCell6.VCell6Byte.VC6_HI, VC6_HI_BYTE, 10);
-		if(result ==0)
-		{
-		    iTemp = BQ76930Data.VCell6.VCell6Byte.VC6_HI;
+        result = I2C_Load_BQ76930(&BQ76930Data.VCell6.VCell6Byte.VC6_HI, VC6_HI_BYTE, 10);
+        if(result ==0)
+        {
+            iTemp = BQ76930Data.VCell6.VCell6Byte.VC6_HI;
             iTemp <<=8;
             iTemp += BQ76930Data.VCell6.VCell6Byte.VC6_LO;
             lTemp = ((unsigned long)iTemp * iGain)/1000;
@@ -831,7 +833,7 @@ void Update_BQ_Data(void)
                 his_data[HIS_Cell5MAXiVoltage]=BatteryData.VCell5.VCell5Word;
             }
 
-			iTemp = BQ76930Data.VCell7.VCell7Byte.VC7_HI;
+            iTemp = BQ76930Data.VCell7.VCell7Byte.VC7_HI;
             iTemp <<=8;
             iTemp += BQ76930Data.VCell7.VCell7Byte.VC7_LO;
             lTemp = ((unsigned long)iTemp * iGain)/1000;
@@ -856,7 +858,7 @@ void Update_BQ_Data(void)
                 his_data[HIS_Cell6MAXiVoltage]=BatteryData.VCell6.VCell6Word;
             }
 
-			iTemp = BQ76930Data.VCell10.VCell10Byte.VC10_HI;
+            iTemp = BQ76930Data.VCell10.VCell10Byte.VC10_HI;
             iTemp <<=8;
             iTemp += BQ76930Data.VCell10.VCell10Byte.VC10_LO;
             lTemp = ((unsigned long)iTemp * iGain)/1000;
@@ -880,21 +882,21 @@ void Update_BQ_Data(void)
             {
                 his_data[HIS_Cell7MAXiVoltage]=BatteryData.VCell7.VCell7Word;
             }
-		}
-	}
+        }
+    }
 
-	result = I2C_Load_BQ76930(&(BQ76930Data.SysStatus.StatusByte), SYS_STAT, 1);
-	if(result ==0)
-	{
-	    PT_ProtectRenew();
-	}
+    result = I2C_Load_BQ76930(&(BQ76930Data.SysStatus.StatusByte), SYS_STAT, 1);
+    if(result ==0)
+    {
+        PT_ProtectRenew();
+    }
 
-	I2C_Load_BQ76930(&(BQ76930Data.SysCtrl1.SysCtrl1Byte),SYS_CTRL1,1);
-	I2C_Load_BQ76930(&(BQ76930Data.SysCtrl2.SysCtrl2Byte),SYS_CTRL2,1);
-	//VBAT TS
-	result = I2C_Load_BQ76930(&(BQ76930Data.VBat.VBatByte.BAT_HI),BAT_HI_BYTE,2);
-	if(result ==0)
-	{
+    I2C_Load_BQ76930(&(BQ76930Data.SysCtrl1.SysCtrl1Byte),SYS_CTRL1,1);
+    I2C_Load_BQ76930(&(BQ76930Data.SysCtrl2.SysCtrl2Byte),SYS_CTRL2,1);
+    //VBAT TS
+    result = I2C_Load_BQ76930(&(BQ76930Data.VBat.VBatByte.BAT_HI),BAT_HI_BYTE,2);
+    if(result ==0)
+    {
         iTemp = BQ76930Data.VBat.VBatByte.BAT_HI;
         iTemp <<=8;
         iTemp&=0xff00;
@@ -924,16 +926,16 @@ void Update_BQ_Data(void)
             his_data[HIS_MOSFET_MAXTEMP]=BatteryData.TS2.TS2Word;
         }
 
-	}
-	//均衡读取
-	I2C_Load_BQ76930(&(BQ76930Data.CellBal1.CellBal1Byte),CELLBAL1,1);
-	I2C_Load_BQ76930(&(BQ76930Data.CellBal2.CellBal2Byte),CELLBAL2,1);
+    }
+    //均衡读取
+    I2C_Load_BQ76930(&(BQ76930Data.CellBal1.CellBal1Byte),CELLBAL1,1);
+    I2C_Load_BQ76930(&(BQ76930Data.CellBal2.CellBal2Byte),CELLBAL2,1);
 
-	if(BQ76930Data.SysStatus.StatusBit.CC_READY == 1)
-	{
-		result = I2C_Load_BQ76930(&(BQ76930Data.CC.CCByte.CC_HI), CC_HI_BYTE, 2);
-		if(result ==0)
-		{
+    if(BQ76930Data.SysStatus.StatusBit.CC_READY == 1)
+    {
+        result = I2C_Load_BQ76930(&(BQ76930Data.CC.CCByte.CC_HI), CC_HI_BYTE, 2);
+        if(result ==0)
+        {
             iTemp = BQ76930Data.CC.CCByte.CC_HI;
             iTemp <<=8;
             iTemp&=0xff00;
@@ -948,10 +950,10 @@ void Update_BQ_Data(void)
             {
                 BatteryData.CC.CCWord = (long)iTemp*844/250;
             }
-		}
-		s_state = 0x80;
-		I2C_Master_TransmitByte(BQ76930_SysState_Addr, s_state);
-	}
+        }
+        s_state = 0x80;
+        I2C_Master_TransmitByte(BQ76930_SysState_Addr, s_state);
+    }
 }
 
 
@@ -1025,9 +1027,6 @@ void LoadFlashData(void)
             BQ76930Data.Protect3.Protect3Bit.UV_DELAY =  UV_DELAY_4s;      //fenglong 20190705
             BQ76930Data.CCCfg = 0x19;
 
-//			BQ76930ProtectDataSource.Bits.FLASH = 0;
-//			BQ76930ProtectDataSource.Bits.Customer = 0;
-//			BQ76930ProtectDataSource.Bits.Default = 1;
 
             TEST_1 = I2C_Master_TransmitByte(
                     BQ76930_SYS_CTRL1_Addr,
@@ -1120,13 +1119,13 @@ void LoadFlashData(void)
 
 void BQ_Shutdown(void)
 {
-	BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_A=0;
-	BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_B=1;
-	I2C_Master_TransmitByte(SYS_CTRL1, BQ76930Data.SysCtrl1.SysCtrl1Byte);
-	_delay_cycles(250);
-	BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_A=1;
-	BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_B=0;
-	I2C_Master_TransmitByte(SYS_CTRL1, BQ76930Data.SysCtrl1.SysCtrl1Byte);
+    BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_A=0;
+    BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_B=1;
+    I2C_Master_TransmitByte(SYS_CTRL1, BQ76930Data.SysCtrl1.SysCtrl1Byte);
+    _delay_cycles(250);
+    BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_A=1;
+    BQ76930Data.SysCtrl1.SysCtrl1Bit.SHUT_B=0;
+    I2C_Master_TransmitByte(SYS_CTRL1, BQ76930Data.SysCtrl1.SysCtrl1Byte);
 }
 
 
@@ -1156,6 +1155,7 @@ void BQ_Shutdown(void)
 //}
 void LED_DisplayRenew(void)
 {
+//    LED_Mode = Charge_LED_Mode_3;
     if ((SystemMode == SystemDischargeMode)||(SystemMode == SystemBootUpWait))
     {
         switch (LED_Mode)
@@ -1168,11 +1168,11 @@ void LED_DisplayRenew(void)
             LED_5_Low;
             LED_6_Low;
 
-            EN_PWM_LID_4_P33;
+            EN_PWM_LID_4_P32;
 
             EN_LED_1_P21;
             EN_LED_2_P22;
-            EN_LED_3_P32;
+            EN_LED_3_P33;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
@@ -1188,8 +1188,8 @@ void LED_DisplayRenew(void)
 
             EN_LED_1_P21;
             EN_LED_2_P22;
-            EN_LED_3_P32;
-            EN_LED_4_P33;
+            EN_LED_3_P33;
+            EN_LED_4_P32;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
@@ -1207,8 +1207,8 @@ void LED_DisplayRenew(void)
 
             EN_LED_1_P21;
             // EN_LED_2_P22;
-            EN_LED_3_P32;
-            EN_LED_4_P33;
+            EN_LED_3_P33;
+            EN_LED_4_P32;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
@@ -1224,8 +1224,8 @@ void LED_DisplayRenew(void)
 
             EN_LED_1_P21;
             EN_LED_2_P22;
-            EN_LED_3_P32;
-            EN_LED_4_P33;
+            EN_LED_3_P33;
+            EN_LED_4_P32;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
@@ -1239,11 +1239,11 @@ void LED_DisplayRenew(void)
             LED_5_Low;
             LED_6_Low;
 
-            EN_PWM_LID_3_P32;
+            EN_PWM_LID_3_P33;
             EN_LED_1_P21;
             EN_LED_2_P22;
 //            EN_LED_3_P32;
-            EN_LED_4_P33;
+            EN_LED_4_P32;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
@@ -1259,15 +1259,15 @@ void LED_DisplayRenew(void)
 
             EN_LED_1_P21;
             EN_LED_2_P22;
-            EN_LED_3_P32;
-            EN_LED_4_P33;
+            EN_LED_3_P33;
+            EN_LED_4_P32;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
             break;
 
         default:
-
+         //   LED_OFF();
             break;
         }
     }
@@ -1288,8 +1288,8 @@ void LED_DisplayRenew(void)
 
             //   EN_LED_1_P21;
             EN_LED_2_P22;
-            EN_LED_3_P32;
-            EN_LED_4_P33;
+            EN_LED_3_P33;
+            EN_LED_4_P32;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
@@ -1311,15 +1311,15 @@ void LED_DisplayRenew(void)
 
             EN_LED_1_P21;
             EN_LED_2_P22;
-            EN_LED_3_P32;
-            EN_LED_4_P33;
+            EN_LED_3_P33;
+            EN_LED_4_P32;
             EN_LED_5_P24;
             EN_LED_6_P25;
 
             break;
 
         default:
-
+           // LED_OFF();
             break;
         }
     }
@@ -1392,7 +1392,6 @@ void LED_ModeDetect(void)
         {
             LED_Mode = Discharge_LED_Mode_1;
         }
-
     }
     else if( SystemMode == SystemChargeMode )       //20190525 fenglong
     {
@@ -1406,10 +1405,10 @@ void LED_ModeDetect(void)
 
 //20190525 fenglong
         //        if( ((BatteryData.VBat.VBatWord >=CHG_VOL_FULL) && (BatteryData.CC.CCWord < CHG_CC_FULL)) || ( HW_PT_Status.Bits.HW_OV == 1 ) || (HW_PT_Status.Bits.HW_OV == 1) )
-		if( 	   ((BatteryData.VBat.VBatWord >=CHG_VOL_FULL) && (BatteryData.CC.CCWord < CHG_CC_FULL))
-				|| ( HW_PT_Status.Bits.HW_OV == 1 )
-				|| (FW_PT_Status.Bits.PT_OV == 1)
-		  )										//fenglong 20190708
+        if(        ((BatteryData.VBat.VBatWord >=CHG_VOL_FULL) && (BatteryData.CC.CCWord < CHG_CC_FULL))
+                || ( HW_PT_Status.Bits.HW_OV == 1 )
+                || (FW_PT_Status.Bits.PT_OV == 1)
+          )                                     //fenglong 20190708
         {
             LED_Mode = Charge_LED_Mode_4;
         }
@@ -1423,26 +1422,24 @@ void SystemStatusDetect(void)
 {
     //????
 //    BatteryModeChangeDelayCount = TA0_1m;           //refresh per minute  //FENGLONG 20190710  V1.83
-//    BatteryCapacity = DetectChargeCapacity();								//FENGLONG 20190710  V1.83
-//    BatteryCapacityRefreshCount = 0;										//FENGLONG 20190710  V1.83
+//    BatteryCapacity = DetectChargeCapacity();                             //FENGLONG 20190710  V1.83
+//    BatteryCapacityRefreshCount = 0;                                      //FENGLONG 20190710  V1.83
 
     if (DC_IN_Count >= TA0_3s)  //适配在位检测
     {
-        if(SystemMode != SystemChargeMode)// && (FW_PT_Status.Bits.PT_UTSCP==0) && (FW_PT_Status.Bits.PT_OTSCP==0) )
+        if(SystemMode != SystemChargeMode )
         {
             SystemMode = SystemChargeMode;
             RS485_MODE =0;
 //            BatteryModeChangeDelayCount = 0;//FENGLONG 20190710  V1.83
 
 //            BatteryCapacityRefreshCount = 0;//FENGLONG 20190714  V1.87
-
-            if((FW_PT_Status.Bits.PT_UTSCP==0) && (FW_PT_Status.Bits.PT_UTCP==0) )
+            if ((FW_PT_Status.Bits.PT_UTSCP==0) && (FW_PT_Status.Bits.PT_UTCP==0))//wk
             {
                 LED_CTRL.Word =0;           //fenglong20190713
                 LED_OFF();
                 close_timer1();
             }
-
             deta_cap_cnt = sys_cap.val.re_cap_rate;
 
         }
@@ -1452,12 +1449,12 @@ void SystemStatusDetect(void)
     {
         if(DC_IN_Release_Count >= TA0_1s)
         {
-            if(SystemMode == SystemChargeMode)
-            {
-
-                FW_PT_Status.Bits.PT_UTSCP=0;           //20190805
+                FW_PT_Status.Bits.PT_UTSCP=0;
                 FW_PT_Status.Bits.PT_OTSCP=0;
-                SystemMode = SystemSleepMode;       //？？
+                FW_PT_Status.Bits.PT_UTCP = 0;    //非充电状态，与充电控制相关的标志位都应该清掉//wk
+                if(SystemMode == SystemChargeMode)
+            {
+                SystemMode = SystemSleepMode;
                 his_data[CHG_CAP_CNT] = sys_cap.val.chg_cap_cnt;
             }
 //            BatteryModeChangeDelayCount = 0;//FENGLONG 20190710  V1.83
@@ -1467,10 +1464,10 @@ void SystemStatusDetect(void)
     }
 
     //????
-//    BatteryCapacityRenew();  //SOC容量		fenglong 20190710 V1.83
+//    BatteryCapacityRenew();  //SOC容量      fenglong 20190710 V1.83
     if( (SystemMode == SystemChargeMode) || (SystemMode == SystemDischargeMode) || (SystemMode == SystemBootUpWait) )// && (SystemMode != SystemBootUpWait) && (SystemMode != SystemBootUp) )
     {
-        if( ALARM_PT_Status.Bits.AL_GLINT == 1 )       //fenglong 20190702
+        if( ALARM_PT_Status.Bits.AL_GLINT == 1)        //fenglong 20190702
         {
 
         	if( FW_PF_Status.Word != 0 )
@@ -1509,19 +1506,19 @@ void SystemStatusDetect(void)
         }
         else if(RS485_MODE == 1)
         {
-        	Alert_count =0;
-        	LED_OFF();
+            Alert_count =0;
+            LED_OFF();
         }
         else
         {
-        	Alert_count =0;
+            Alert_count =0;
             LED_ModeDetect();  //LED状态切换
             LED_DisplayRenew();  //LED显示函数
         }
     }
     else
     {
-    	Alert_count =0;
+        Alert_count =0;
     }
 //    else
 //    {
@@ -1547,8 +1544,8 @@ void Charge_Mode2_LED_Display(void)
         LED_6_Low;
 
         EN_LED_2_P22;
-        EN_LED_3_P32;
-        EN_LED_4_P33;
+        EN_LED_3_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
@@ -1566,8 +1563,8 @@ void Charge_Mode2_LED_Display(void)
         LED_6_Low;
 
         EN_LED_1_P21;
-        EN_LED_3_P32;
-        EN_LED_4_P33;
+        EN_LED_3_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
@@ -1587,8 +1584,8 @@ void Charge_Mode2_LED_Display(void)
 
         EN_LED_1_P21;
         EN_LED_2_P22;
-        EN_LED_3_P32;
-        EN_LED_4_P33;
+        EN_LED_3_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
@@ -1601,8 +1598,8 @@ void Charge_Mode2_LED_Display(void)
         LED_5_Low;
         LED_6_Low;
 
-        EN_LED_3_P32;
-        EN_LED_4_P33;
+        EN_LED_3_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
@@ -1615,7 +1612,7 @@ void Charge_Mode2_LED_Display(void)
         break;
 
     case 140:
-    	LED_OFF();
+        LED_OFF();
 
         break;
 
@@ -1641,8 +1638,8 @@ void Charge_Mode3_LED_Display(void)
         LED_6_Low;
 
         EN_LED_2_P22;
-        EN_LED_3_P32;
-        EN_LED_4_P33;
+        EN_LED_3_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
@@ -1660,8 +1657,8 @@ void Charge_Mode3_LED_Display(void)
         LED_6_Low;
 
         EN_LED_1_P21;
-        EN_LED_3_P32;
-        EN_LED_4_P33;
+        EN_LED_3_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
@@ -1680,13 +1677,13 @@ void Charge_Mode3_LED_Display(void)
 
         EN_LED_1_P21;
         EN_LED_2_P22;
-        EN_LED_4_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
         BreathingCycleCount = 40;
-        TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
-        EN_PWM_LID_3_P32;
+        TA1CCR2 = BreathingTable_1600[BreathingCycleCount];//20190718  AID
+        EN_PWM_LID_3_P33;
         break;
 
     case 120:
@@ -1699,8 +1696,8 @@ void Charge_Mode3_LED_Display(void)
 
         EN_LED_1_P21;
         EN_LED_2_P22;
-        EN_LED_3_P32;
-        EN_LED_4_P33;
+        EN_LED_3_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
@@ -1712,19 +1709,20 @@ void Charge_Mode3_LED_Display(void)
         LED_5_Low;
         LED_6_Low;
 
-        EN_LED_4_P33;
+        EN_LED_4_P32;
         EN_LED_5_P24;
         EN_LED_6_P25;
 
         BreathingCycleCount = 0;
         TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
+        TA1CCR2 = BreathingTable_1600[BreathingCycleCount];//20190718  AID
         EN_PWM_LID_1_P21;
         EN_PWM_LID_2_P22;
-        EN_PWM_LID_3_P32;
+        EN_PWM_LID_3_P33;
         break;
 
     case 180:
-    	LED_OFF();
+        LED_OFF();
 
         break;
 
@@ -1743,72 +1741,77 @@ void TA11_Breathing(void)
 {
     UINT8 Buff;
 
-    if( ALARM_PT_Status.Bits.AL_GLINT == 1 )
+    if( ALARM_PT_Status.Bits.AL_GLINT == 1)
     {
-		
+
     	if(SystemMode == SystemChargeMode)
     	{
-        	if( FW_PF_Status.Word != 0 )
-        	{
-				Buff=40;
+    		if( FW_PF_Status.Word != 0 )
+    		{
+    	        Buff=40;
 
-				BreathingCycleCount = BreathingCycleCount + 1;
-				if (BreathingCycleCount >= Buff)
-				{
-					BreathingCycleCount = 0;
-				}
-				TA1CCR2 = BreathingTable_800[BreathingCycleCount];
-        	}
-        	else if( (FW_PT_Status.Bits.PT_OTDP == 1) || (FW_PT_Status.Bits.PT_OTSCP == 1) || (FW_PT_Status.Bits.PT_OTCP == 1))
-			{
-				if (LED_Mode == Charge_LED_Mode_2)
-					Charge_Mode2_LED_Display();
-				if (LED_Mode == Charge_LED_Mode_3)
-					Charge_Mode3_LED_Display();
+    	        BreathingCycleCount = BreathingCycleCount + 1;
+    	        if (BreathingCycleCount >= Buff)
+    	        {
+    	            BreathingCycleCount = 0;
+    	        }
+    	        TA1CCR1 = BreathingTable_800[BreathingCycleCount];// 20190718  AID
+    	        TA1CCR2 = BreathingTable_800[BreathingCycleCount];
+    		}
+    		else if( (FW_PT_Status.Bits.PT_OTDP == 1) || (FW_PT_Status.Bits.PT_OTSCP == 1) || (FW_PT_Status.Bits.PT_OTCP == 1) )
+    		{
+    	        if (LED_Mode == Charge_LED_Mode_2)
+    	            Charge_Mode2_LED_Display();
+    	        if (LED_Mode == Charge_LED_Mode_3)
+    	            Charge_Mode3_LED_Display();
 
-				TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
-				ChargeLED_Mode2_3_Count = ChargeLED_Mode2_3_Count + 1;
-				BreathingCycleCount = BreathingCycleCount + 1;
+    	        TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
+    	        TA1CCR2 = BreathingTable_1600[BreathingCycleCount];// 20190719  AID
+    	        ChargeLED_Mode2_3_Count = ChargeLED_Mode2_3_Count + 1;
+    	        BreathingCycleCount = BreathingCycleCount + 1;
 
-				if ((LED_Mode == Charge_LED_Mode_1)
-						&& (BreathingCycleCount >= Breathing_1600))
-					BreathingCycleCount = 0;
-			}
-			else
-			{
-				Buff=40;
+    	        if ((LED_Mode == Charge_LED_Mode_1)
+    	                && (BreathingCycleCount >= Breathing_1600))
+    	            BreathingCycleCount = 0;
+    		}
+    		else
+    		{
+    	        Buff=40;
 
-				BreathingCycleCount = BreathingCycleCount + 1;
-				if (BreathingCycleCount >= Buff)
-				{
-					BreathingCycleCount = 0;
-				}
-				TA1CCR2 = BreathingTable_800[BreathingCycleCount];
-			}
-		}
-		else
-		{
-			Buff=40;
+    	        BreathingCycleCount = BreathingCycleCount + 1;
+    	        if (BreathingCycleCount >= Buff)
+    	        {
+    	            BreathingCycleCount = 0;
+    	        }
+    	        TA1CCR1 = BreathingTable_800[BreathingCycleCount];// 20190718  AID
+    	        TA1CCR2 = BreathingTable_800[BreathingCycleCount];
+    		}
+    	}
+    	else
+    	{
+            Buff=40;
 
-			BreathingCycleCount = BreathingCycleCount + 1;
-			if (BreathingCycleCount >= Buff)
-			{
-				BreathingCycleCount = 0;
-			}
-			TA1CCR2 = BreathingTable_800[BreathingCycleCount];
-		}		
+            BreathingCycleCount = BreathingCycleCount + 1;
+            if (BreathingCycleCount >= Buff)
+            {
+                BreathingCycleCount = 0;
+            }
+            TA1CCR1 = BreathingTable_800[BreathingCycleCount];// 20190718  AID
+            TA1CCR2 = BreathingTable_800[BreathingCycleCount];
+    	}
     }
     else if ( (SystemMode == SystemDischargeMode) || (SystemMode == SystemBootUpWait) )
     {
         if (LED_Mode == Discharge_LED_Mode_1)
-            Buff = Breathing_1200;
+            Buff = Breathing_1200;              // 20190719  AID  Breathing_1200
         else
             Buff = Breathing_1600;
 
         TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
-        TA1CCR2 = BreathingTable_1200[BreathingCycleCount];
+        TA1CCR2 = BreathingTable_1600[BreathingCycleCount];// 20190719  AID
 
         BreathingCycleCount = BreathingCycleCount + 1;
+
         if (BreathingCycleCount >= Buff)
         {
             BreathingCycleCount = 0;
@@ -1822,6 +1825,7 @@ void TA11_Breathing(void)
             Charge_Mode3_LED_Display();
 
         TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
+        TA1CCR2 = BreathingTable_1600[BreathingCycleCount];// 20190719  AID
         ChargeLED_Mode2_3_Count = ChargeLED_Mode2_3_Count + 1;
         BreathingCycleCount = BreathingCycleCount + 1;
 
@@ -1831,39 +1835,39 @@ void TA11_Breathing(void)
     }
     else
     {
-    	//????
-    	_nop();
+        //????
+        _nop();
     }
 }
 
 void LED_ALARM(void)
 {
-	LED_OFF();
+    LED_OFF();
 
 
-	//    BreathingCycleCount = 20;
-	//    if(BreathingCycleCount>=79)
-	//    {
-	//        BreathingCycleCount=0;
-	//    }
-	//    BreathingCycleCount++;
+    //    BreathingCycleCount = 20;
+    //    if(BreathingCycleCount>=79)
+    //    {
+    //        BreathingCycleCount=0;
+    //    }
+    //    BreathingCycleCount++;
 
-	//    TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
-	//    TA1CCR2 = BreathingTable_1600[BreathingCycleCount];
-	//    TA1CCR2 = BreathingCycleCount;
-	//    EN_PWM_LID_1_P21;       //绿灯
-	//    EN_PWM_LID_2_P22;       //绿灯
-	//    EN_PWM_LID_3_P32;       //绿灯
-	    EN_PWM_LID_4_P33;       //红灯
-	    EN_PWM_LID_5_P24;       //LED1位置蓝色
-	    EN_PWM_LID_6_P25;         //LED2位置蓝色
+    //    TA1CCR1 = BreathingTable_1600[BreathingCycleCount];
+    //    TA1CCR2 = BreathingTable_1600[BreathingCycleCount];
+    //    TA1CCR2 = BreathingCycleCount;
+    //    EN_PWM_LID_1_P21;       //绿灯
+    //    EN_PWM_LID_2_P22;       //绿灯
+    //    EN_PWM_LID_3_P32;       //绿灯
+        EN_PWM_LID_4_P32;       //红灯
+        EN_PWM_LID_5_P24;       //LED1位置蓝色
+        EN_PWM_LID_6_P25;         //LED2位置蓝色
 
 }
 
 void His_DataRenew(void)
 {
     static uchar his_save_delay=0,wait_2_write =0;
-    UINT8 i;
+    //UINT8 i;
     UINT16 cur_tmp;
     if(his_data[HIS_MINVOLT]  ==0)
     {
@@ -1935,11 +1939,12 @@ void His_DataRenew(void)
 
 void CLR_PF(void)
 {
-	uint crc16;
-	uchar Buff_0;
+    uint crc16;
+    uchar Buff_0;
 
-    if(FW_PF_Status.Word != 0)
-    {
+    his_data_init();
+//    if(FW_PF_Status.Word != 0)
+//    {
         FW_PF_Status.Word = 0;
         his_data[PF_STATE_ADDR] = FW_PF_Status.Word;
         crc16 =0;
@@ -1950,13 +1955,13 @@ void CLR_PF(void)
         his_data[HIS_CRC16] = crc16;
         Falsh_Write_Arr((unsigned int *)Segment_C,his_data,FLASH_DATA_NUM);                 //fenglong 20190615
         Falsh_Write_Arr((unsigned int *)Segment_D,his_data,FLASH_DATA_NUM);                 //fenglong 20190615
-    }
+//    }
+
     Cell_PF_UV_Count = 0;               //permanent fail safety under voltage
     Cell_PF_OV_Count = 0;               //4.23mV    -   8s      //permanent fail safety over voltage
     PF_OCC_Count = 0;                   //permanent fail  over current in charge
     PF_OCD_Count = 0;                   //permanent fail  over current in discharge
     PF_OTC_Count = 0;
     PF_OTM_Count = 0;                   //permanent fail safety over  temperature MOSFET
-
 }
 
